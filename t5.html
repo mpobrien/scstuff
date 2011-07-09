@@ -1,0 +1,189 @@
+<html>
+  <head>
+    <style type="text/css">
+      @font-face {
+        font-family: "Interstate";
+        src: url(Interstate-Light.ttf) format("truetype");
+      }
+
+      body{
+        margin:0px;
+        font-family: Georgia, Palatino, 'Palatino Linotype', serif;
+      }
+      #searchresults{
+        font-size:12px;
+        line-height:24px;
+      }
+      img{
+        vertical-align:middle;
+        border:none;
+      }
+      img.albumartimg{
+        display:block;
+        float:left;
+      }
+      .meta{
+        font-style:italic;
+        color:#888;
+        font-size:.8em;
+      }
+
+      .hover{
+        background-color:#eee;
+      }
+      .notplaying{
+        border:1px solid transparent;
+      }
+      .playing{
+        border:1px solid #888;
+        background-color:#efefef;
+      }
+
+      .userresult, .trackresult{
+        cursor:pointer;
+      }
+      .playing{
+        border:1px solid #888;
+        background-color:#efefef;
+      }
+      span.title{
+        padding-left:5px;
+      }
+      .lilheart{
+        background-image:url('heartsmall.png');
+        background-position:center;
+        background-repeat: no-repeat;
+        height: 12px;
+        width:12px;
+        float:left;
+        line-height:12px;
+        padding-left:12px;
+        font-weight:bold;
+        font-family:sans-serif;
+        margin-left:4px;
+      }
+    </style>
+    <script type="text/javascript" charset="utf-8" src="./soundcloud.player.api.js"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+    <script type="text/javascript">
+
+      var userSearchCallback = function(data){
+        $('#search_spinner').hide();
+        for(var i=0;i<data.length;i++){
+          console.log(data[i]);
+          $('<div class="userresult"></div>')
+            .append($('<img class="albumartimg" src="' + data[i].avatar_url + '" width="24" height="24"></img>'))
+            .append($('<span></span>').text(data[i].username + ' (' +data[i].track_count + ' tracks)' ))
+            .appendTo('#searchresults')
+            .data("user_id", data[i].id);
+        }
+      }
+
+      var trackSearchCallback = function(data){
+        $('#search_spinner').hide();
+        for(var i=0;i<data.length;i++){
+          console.log(data[i], data[i].artwork_url != null);
+          var artwork = $('<div style="width:24px;height:24px; float:left;">&nbsp; </div>') 
+          if( data[i].artwork_url != null ){
+            artwork.append($('<img src="' + data[i].artwork_url + '" width="24" height="24" style="vertical-align:middle"></img>'))
+          }
+          $('<div class="trackresult notplaying"></div>')
+            .append(artwork)
+            .append($('<div class="lilheart">&nbsp;</div>').text(data[i].favoritings_count))
+            .append($('<span class="title"></span>').text(data[i].title))
+            .append(document.createTextNode(' '))
+            .append($('<span class="meta">by</span>'))
+            .append(document.createTextNode(' '))
+            .append($('<span class="artist"></span>').text(data[i].user.username)) 
+            .appendTo('#searchresults')
+            .data("url", data[i].permalink_url);
+        }
+      }
+
+
+      function search(type){
+        $('#search_spinner').show();
+        var url;
+        if( type != 'tracks') url = "http://api.soundcloud.com/users.json?client_id=07b794af61fdce4a25c9eadce40dda83&q=" + escape($('#user_query').val()) + "&callback=?"
+        else url = "http://api.soundcloud.com/tracks.json?client_id=07b794af61fdce4a25c9eadce40dda83&q=" + escape($('#user_query').val()) + "&callback=?", 
+        $('#searchresults > div').remove();
+        $.getJSON(url, type=='tracks' ? trackSearchCallback : userSearchCallback)
+      }
+
+      var currentlyPlaying = null;
+   
+      $(document).ready(function(){
+        soundcloud.addEventListener('onPlayerReady', function(player, data){
+          player.api_play();
+        });
+        $('#user_query').keypress( function(e){
+          if(e.keyCode==13 && $(this).val().length > 0 ){
+            search($('#searchtype').val());
+          } 
+        })
+
+        $('.userresult').live({
+          mouseenter: function(){
+            $(this).addClass("hover");
+          },
+
+          mouseleave: function(){
+            if(!$('#settingsmenu').is(':visible')){
+              $(this).removeClass("hover");
+            }
+          },
+          click: function(){
+            console.log($(this).data('user_id'));
+          }
+        });
+
+        $('.trackresult').live({
+          mouseenter: function(){
+            $(this).addClass("hover");
+          },
+
+          mouseleave: function(){
+            if(!$('#settingsmenu').is(':visible')){
+              $(this).removeClass("hover");
+            }
+          },
+
+          click:function(){
+            if( currentlyPlaying ){
+              $(currentlyPlaying).removeClass('playing').addClass('notplaying')
+            }
+            console.log("setting", currentlyPlaying)
+            currentlyPlaying = this;
+            console.log("set", currentlyPlaying)
+            $(this).addClass('playing').removeClass('notplaying');
+            soundcloud.getPlayer('yourPlayerId').api_load($(this).data('url'));
+          }
+        });
+      })
+    </script>
+  
+  </head>                                                                             
+  <body>
+    <div style="background-color:black; color:white; font-weight:bold; font-family:sans-serif;">
+      <img src="http://developers.soundcloud.com/images/cloud.png"/>
+      <span>Find tracks on <span style=" font-family: Interstate, 'Lucida Grande', Helvetica, Arial, sans-serif;">Soundcloud</span></span>
+    </div>
+    <div>
+      <select name="searchtype" id="searchtype">
+        <option value="tracks">Search Tracks</option>
+        <option value="users">Search Users</option>
+      </select>
+      <input type="text" id="user_query" name="user_query"/>
+      <img src="ajax-loader.gif" style="display:none" id="search_spinner" />
+      <div id="searchresults">
+      </div>
+    </div>
+    
+    <object height="81" width="100%" id="yourPlayerId" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000">
+      <param name="movie" value="http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fsoundcloud.com%2Fmatas%2Fhobnotropic&amp;enable_api=true&amp;object_id=yourPlayerId"></param>
+      <param name="allowscriptaccess" value="always"></param>
+      <embed allowscriptaccess="always" height="81" src="http://player.soundcloud.com/player.swf?url=http%3A%2F%2Fsoundcloud.com%2Fmatas%2Fhobnotropic&amp;enable_api=true&amp;object_id=yourPlayerId" type="application/x-shockwave-flash" width="100%" name="yourPlayerId"></embed>
+    </object>
+
+  </body>
+</html>
