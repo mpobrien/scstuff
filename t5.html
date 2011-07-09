@@ -12,7 +12,7 @@
       }
       #searchresults{
         font-size:12px;
-        line-height:24px;
+        line-height:22px;
       }
       img{
         vertical-align:middle;
@@ -30,25 +30,24 @@
 
       .songlength{
         color:#888;
-        padding-left:10px;
       }
 
       .hover{
         background-color:#eee;
       }
       .notplaying{
-        border:1px solid transparent;
-      }
-      .playing{
-        border:1px solid #888;
-        background-color:#efefef;
+        border-top:1px solid transparent;
+        border-bottom:1px solid transparent;
       }
 
       .userresult, .trackresult{
+        padding-top:2px;
+        padding-bottom:2px;
         cursor:pointer;
       }
       .playing{
-        border:1px solid #888;
+        border-top:1px solid #888;
+        border-bottom:1px solid #888;
         background-color:#efefef;
       }
       span.title{
@@ -56,13 +55,15 @@
       }
       .lilheart{
         background-image:url('heartsmall.png');
-        background-position:center;
+        background-position: 0% 50%;
         background-repeat: no-repeat;
         height: 12px;
         width:12px;
         float:left;
         line-height:12px;
-        padding-left:12px;
+        padding-top:10px;
+        padding-left:6px;
+        padding-right:12px;
         font-weight:bold;
         font-family:sans-serif;
         margin-left:4px;
@@ -73,10 +74,11 @@
     <script type="text/javascript">
 
       var userSearchCallback = function(data){
+        console.log("callback!");
         $('#search_spinner').hide();
         for(var i=0;i<data.length;i++){
           console.log(data[i]);
-          $('<div class="userresult"></div>')
+          $('<div class="userresult notplaying"></div>')
             .append($('<img class="albumartimg" src="' + data[i].avatar_url + '" width="24" height="24"></img>'))
             .append($('<span></span>').text(data[i].username + ' (' +data[i].track_count + ' tracks)' ))
             .appendTo('#searchresults')
@@ -88,9 +90,11 @@
         $('#search_spinner').hide();
         for(var i=0;i<data.length;i++){
           console.log(data[i], data[i].artwork_url != null);
-          var artwork = $('<div style="width:24px;height:24px; float:left;">&nbsp; </div>') 
+          var artwork = $('<div style="width:24px;height:24px; float:left;"></div>') 
           if( data[i].artwork_url != null ){
             artwork.append($('<img src="' + data[i].artwork_url + '" width="24" height="24" style="vertical-align:middle"></img>'))
+          }else{
+            artwork.html('&nbsp;')
           }
           var ms = data[i].duration;
           var seconds = Math.floor(ms / 1000) % 60;
@@ -117,8 +121,9 @@
         var url;
         if( type != 'tracks') url = "http://api.soundcloud.com/users.json?client_id=07b794af61fdce4a25c9eadce40dda83&q=" + escape($('#user_query').val()) + "&callback=?"
         else url = "http://api.soundcloud.com/tracks.json?client_id=07b794af61fdce4a25c9eadce40dda83&q=" + escape($('#user_query').val()) + "&callback=?", 
-        $('#searchresults > div').remove();
+        console.log("doing it", url);
         $.getJSON(url, type=='tracks' ? trackSearchCallback : userSearchCallback)
+        $('#searchresults > div').remove();
       }
 
       var currentlyPlaying = null;
