@@ -87,9 +87,15 @@
           if( data[i].artwork_url != null ){
             artwork.append($('<img src="' + data[i].artwork_url + '" width="24" height="24" style="vertical-align:middle"></img>'))
           }
+          var ms = data[i].duration;
+          var seconds = Math.floor(ms / 1000) % 60;
+          var minutes = Math.floor(ms / (1000 * 60)) % 60;
+          var prettyDuration = minutes + ":" + String("0" + seconds).slice(-2);
+
           $('<div class="trackresult notplaying"></div>')
             .append(artwork)
             .append($('<div class="lilheart">&nbsp;</div>').text(data[i].favoritings_count))
+            .append($('<span class="songlength"></span>').text(prettyDuration))
             .append($('<span class="title"></span>').text(data[i].title))
             .append(document.createTextNode(' '))
             .append($('<span class="meta">by</span>'))
